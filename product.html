@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rezniqi — Rreth Nesh</title>
+  <title>Rezniqi — Produkt</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,43 +12,45 @@
       <a href="index.html" class="logo">Rezniqi</a>
       <nav id="nav">
         <a href="index.html">Ballina</a>
-        <a href="products.html">Produktet</a>
+        <a href="products.html" class="active">Produktet</a>
         <a href="custom-order.html">Porosi Speciale</a>
-        <a href="about.html" class="active">Rreth Nesh</a>
+        <a href="about.html">Rreth Nesh</a>
         <a href="contact.html">Kontakti</a>
       </nav>
       <button class="menu-toggle" onclick="document.getElementById('nav').classList.toggle('open')">&#9776;</button>
     </div>
   </header>
 
-  <div class="page-hero">
-    <h1>Rreth Nesh</h1>
-    <p>Uzina Krijuese — sepse çdo gjë e mirë fillon me dikë që guxon të krijojë.</p>
+  <div class="breadcrumb">
+    <a href="products.html">Produktet</a>
+    <span>/</span>
+    <span id="breadcrumbName">—</span>
   </div>
 
-  <section class="about-section">
-
-    <h2>Kush jemi ne?</h2>
-    <p>Jemi Rezniqi — një uzinë e vogël me shpirt të madh. Prej vitesh bëjmë gjëra që u japin formë momenteve: trofe që festojnë fitues, vula që vulosin marrëveshje, stemërevere që thonë "isha këtu" pa thënë asnjë fjalë.</p>
-    <p>Nuk jemi fabrikë masive. Nuk kemi një robot që shtypë butonat ndërsa ne pimë kafe. Mirë, ndoshta kafen e pimë — por çdo produkt del me dorë, me kujdes dhe me pak muzikë në sfond (jazz, natyrisht).</p>
-
-    <div class="about-tagline">
-      "Uzina Krijuese — sepse çdo gjë e mirë<br>fillon me dikë që guxon të krijojë."
+  <div class="product-detail" id="productDetail">
+    <div class="product-detail-img"><span>Imazh</span></div>
+    <div class="product-detail-info">
+      <p class="product-detail-category" id="detailCategory">—</p>
+      <h1 class="product-detail-name" id="detailName">—</h1>
+      <p class="product-detail-price" id="detailPrice">—</p>
+      <p class="product-detail-desc" id="detailDesc">—</p>
+      <div class="product-detail-meta">
+        <div class="meta-item">
+          <label>Sasia e disponueshme</label>
+          <span id="detailQty">—</span>
+        </div>
+        <div class="meta-item">
+          <label>Kategoria</label>
+          <span id="detailCatName">—</span>
+        </div>
+      </div>
+      <div id="alsoAvailable" style="display:none;" class="also-available">
+        <h4>Ky dizajn është i disponueshëm edhe si</h4>
+        <div class="variant-links" id="variantLinks"></div>
+      </div>
+      <a href="custom-order.html" class="btn">Porosit / Pyet për çmim</a>
     </div>
-
-    <h2>Si filloi e gjitha</h2>
-    <p>Gjithçka nisi me një ide të thjeshtë: pse produktet e personalizuara duhet të jenë të shtrenjta, të mërzitshme ose të zgjatin si projekt ndërtimor? Ne menduam ndryshe. Dhe ja ku jemi.</p>
-    <p>Nga ajo ide e parë, Rezniqi u bë vendi ku çdo kompani, institucion, shkollë, klub sportiv ose individ mund të vijë me një vision dhe të largohet me diçka konkrete — diçka të prekshme, diçka me vlerë.</p>
-
-    <h2>Çfarë bëjmë mirë</h2>
-    <p>Trofetë tanë i kanë fituar njerëz që realisht e meritojnë — dhe disa që ndoshta e merrnin pak shumë seriozisht veten. Vulat tona vulosin dokumente nga Prishtina në Tetovë. Stemëreveret tona kanë udhëtuar në xhepat e njerëzve nga të gjitha anët e botës.</p>
-    <p>Por ajo që na bën krenarë nuk është produkti në vetvete — është momenti kur klienti e hap paketën dhe thotë: <em>"Saktë kështu e doja."</em></p>
-
-    <h2>Filozofia jonë</h2>
-    <p>Jazz band, jo Swarovski. Nuk duam të shkëlqejmë — duam të tingëllojmë mirë. Elegancë pa zhurmë. Cilësi pa arrogancë. Dhe çmime që nuk të bëjnë të duash të shuash faturën.</p>
-    <p>Nëse keni një ide, sado e çuditshme të duket — na kontaktoni. Kemi parë gjëra.</p>
-
-  </section>
+  </div>
 
   <footer>
     <div class="footer-inner">
@@ -67,5 +69,35 @@
       </div>
     </div>
   </footer>
+
+  <script src="products-data.js"></script>
+  <script>
+    const id = new URLSearchParams(window.location.search).get('id');
+    const product = PRODUCTS.find(p => p.id === id);
+
+    if (!product) {
+      document.getElementById('detailName').textContent = 'Produkti nuk u gjet.';
+    } else {
+      document.title = `Rezniqi — ${product.name}`;
+      document.getElementById('breadcrumbName').textContent = product.name;
+      document.getElementById('detailCategory').textContent = CATEGORY_NAMES[product.category] || '';
+      document.getElementById('detailName').textContent = product.name;
+      document.getElementById('detailPrice').textContent = product.price + '€';
+      document.getElementById('detailDesc').textContent = product.desc;
+      document.getElementById('detailQty').textContent = product.qty + ' copë';
+      document.getElementById('detailCatName').textContent = CATEGORY_NAMES[product.category] || '';
+
+      // Variants
+      if (product.designId) {
+        const variants = PRODUCTS.filter(p => p.designId === product.designId && p.id !== product.id);
+        if (variants.length) {
+          document.getElementById('alsoAvailable').style.display = 'block';
+          document.getElementById('variantLinks').innerHTML = variants.map(v =>
+            `<a href="product.html?id=${v.id}" class="variant-link">${v.name}</a>`
+          ).join('');
+        }
+      }
+    }
+  </script>
 </body>
 </html>
