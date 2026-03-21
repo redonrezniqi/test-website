@@ -5,6 +5,20 @@ const knex = require('knex')(require('./knexfile'));
 const app = express();
 app.use(express.json());
 
+// API index
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'Rezniqi API',
+    endpoints: [
+      'GET /api/health',
+      'GET /api/categories',
+      'GET /api/products',
+      'GET /api/products?category=<slug>',
+      'GET /api/products/:slug',
+    ]
+  });
+});
+
 // Health check
 app.get('/api/health', async (req, res) => {
   try {
