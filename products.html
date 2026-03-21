@@ -63,12 +63,11 @@
     </div>
   </footer>
 
-  <script src="products-data.js"></script>
   <script>
+    let allProducts = [];
     let activeCat = 'all';
     let searchQuery = '';
 
-    // Read URL param
     const urlCat = new URLSearchParams(window.location.search).get('cat');
     if (urlCat) {
       activeCat = urlCat;
@@ -80,9 +79,9 @@
     function render() {
       const grid = document.getElementById('productsGrid');
       const q = searchQuery.toLowerCase();
-      const filtered = PRODUCTS.filter(p => {
-        const matchCat = activeCat === 'all' || p.category === activeCat;
-        const matchSearch = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || (DESIGN_NAMES[p.designId] || '').toLowerCase().includes(q) || CATEGORY_NAMES[p.category].toLowerCase().includes(q);
+      const filtered = allProducts.filter(p => {
+        const matchCat = activeCat === 'all' || p.category_slug === activeCat;
+        const matchSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.category_name || '').toLowerCase().includes(q);
         return matchCat && matchSearch;
       });
 
@@ -92,17 +91,45 @@
       }
 
       grid.innerHTML = filtered.map(p => `
-        <a href="product.html?id=${p.id}" class="product-card">
-          <div class="product-img"><span>Imazh</span></div>
+        <a href="product.html?id=${p.slug}" class="product-card">
+          <div class="product-img">
+            ${p.primary_image
+              ? `<img src="${p.primary_image}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`
+              : '<span>Imazh</span>'}
+          </div>
           <div class="product-info">
             <div class="product-name">${p.name}</div>
             <div class="product-meta">
-              <span class="product-price">${p.price}&euro;</span>
-              <span class="product-qty">Sasia: ${p.qty}</span>
+              <span class="product-price">${parseFloat(p.price).toFixed(0)}&euro;</span>
+              <span class="product-qty">Sasia: ${p.stock_qty}</span>
             </div>
           </div>
         </a>
       `).join('');
+    }
+
+    async function loadProducts() {
+      const grid = document.getElementById('productsGrid');
+      grid.innerHTML = '<div class="no-results">Duke ngarkuar...</div>';
+      try {
+        const res = await fetch('/api/products');
+        const products = await res.json();
+        // Show list immediately, then load images in background
+        allProducts = products.map(p => ({ ...p, primary_image: null }));
+        render();
+        const withImages = await Promise.all(products.map(async p => {
+          try {
+            const r = await fetch('/api/products/' + p.slug);
+            const full = await r.json();
+            const primary = (full.images || []).find(i => i.is_primary) || (full.images || [])[0];
+            return { ...p, primary_image: primary ? primary.url : null };
+          } catch { return p; }
+        }));
+        allProducts = withImages;
+        render();
+      } catch (err) {
+        grid.innerHTML = '<div class="no-results">Gabim gjatë ngarkimit. Provoni sërish.</div>';
+      }
     }
 
     document.getElementById('tabs').addEventListener('click', e => {
@@ -118,7 +145,7 @@
       render();
     });
 
-    render();
+    loadProducts();
   </script>
 </body>
 </html>

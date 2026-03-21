@@ -70,34 +70,61 @@
     </div>
   </footer>
 
-  <script src="products-data.js"></script>
   <script>
-    const id = new URLSearchParams(window.location.search).get('id');
-    const product = PRODUCTS.find(p => p.id === id);
+    const slug = new URLSearchParams(window.location.search).get('id');
 
-    if (!product) {
-      document.getElementById('detailName').textContent = 'Produkti nuk u gjet.';
-    } else {
-      document.title = `Rezniqi — ${product.name}`;
-      document.getElementById('breadcrumbName').textContent = product.name;
-      document.getElementById('detailCategory').textContent = CATEGORY_NAMES[product.category] || '';
-      document.getElementById('detailName').textContent = product.name;
-      document.getElementById('detailPrice').textContent = product.price + '€';
-      document.getElementById('detailDesc').textContent = product.desc;
-      document.getElementById('detailQty').textContent = product.qty + ' copë';
-      document.getElementById('detailCatName').textContent = CATEGORY_NAMES[product.category] || '';
+    async function loadProduct() {
+      if (!slug) {
+        document.getElementById('detailName').textContent = 'Produkti nuk u gjet.';
+        return;
+      }
+      try {
+        const res = await fetch('/api/products/' + slug);
+        if (!res.ok) throw new Error('not found');
+        const p = await res.json();
 
-      // Variants
-      if (product.designId) {
-        const variants = PRODUCTS.filter(p => p.designId === product.designId && p.id !== product.id);
-        if (variants.length) {
-          document.getElementById('alsoAvailable').style.display = 'block';
-          document.getElementById('variantLinks').innerHTML = variants.map(v =>
-            `<a href="product.html?id=${v.id}" class="variant-link">${v.name}</a>`
+        document.title = 'Rezniqi — ' + p.name;
+        document.getElementById('breadcrumbName').textContent = p.name;
+        document.getElementById('detailCategory').textContent = p.category_name || '';
+        document.getElementById('detailName').textContent = p.name;
+        document.getElementById('detailPrice').textContent = parseFloat(p.price).toFixed(0) + '€';
+        document.getElementById('detailDesc').textContent = p.description || '';
+        document.getElementById('detailQty').textContent = p.stock_qty + ' copë';
+        document.getElementById('detailCatName').textContent = p.category_name || '';
+
+        // Primary image
+        const imgEl = document.querySelector('.product-detail-img');
+        const primary = (p.images || []).find(i => i.is_primary) || (p.images || [])[0];
+        if (primary) {
+          imgEl.innerHTML = `<img src="${primary.url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+        }
+
+        // Variants (size/material from DB)
+        if (p.variants && p.variants.length) {
+          const varSection = document.getElementById('alsoAvailable');
+          const varLinks = document.getElementById('variantLinks');
+          varSection.style.display = 'block';
+          varSection.querySelector('h4').textContent = 'Variantet e disponueshme';
+          varLinks.innerHTML = p.variants.map(v =>
+            `<span class="variant-link">${v.label}${v.price_modifier > 0 ? ' (+' + v.price_modifier + '€)' : ''}</span>`
           ).join('');
         }
+
+        // Tags
+        if (p.tags && p.tags.length) {
+          const meta = document.querySelector('.product-detail-meta');
+          const tagDiv = document.createElement('div');
+          tagDiv.className = 'meta-item';
+          tagDiv.innerHTML = '<label>Etiketat</label><span>' + p.tags.map(t => t.name).join(', ') + '</span>';
+          meta.appendChild(tagDiv);
+        }
+
+      } catch (err) {
+        document.getElementById('detailName').textContent = 'Produkti nuk u gjet.';
       }
     }
+
+    loadProduct();
   </script>
 </body>
 </html>
